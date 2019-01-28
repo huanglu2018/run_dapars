@@ -13,15 +13,17 @@ bedfile=/public/home/huanglu/APA/ncbi.mouse.gencode19.basic.bed
 # extracted_3UTR=/public/home/huanglu/APA/extracted_3UTR.bed
 ref_genome=/public/home/huanglu/resource/genome/mm10.fa
 bwa_threads=10
-
-
+case_bam_list_file=
+ctrl_bam_list_file=
 
 out_prefix=(young_vs_old young_vs_KO)
 
 logdir=$output_dir/log
 mkdir -p $logdir
 
-configdir=$output_dir/configure_file
+bedgraphdir=$output_dir/bedgraph_file
+mkdir -p $bedgraphdir
+
 symbol_map=$output_dir/$(basename $bedfile).symbol_map.txt
 extracted_3UTR=$output_dir/$(basename $bedfile).extracted_3UTR.txt
 
@@ -32,32 +34,11 @@ python2 $DaPars_Extract_Anno_ex \
     -s $symbol_map \
     -o $extracted_3UTR
 
-bwa_align_sort(){
-ref_genome=$1
-full_prefix=$2
-threads=$3
-sort_bam_file=$4
+caselist_string=`less $case_bam_list_file` ; caselist=(${caselist_string// / })
+ctrllist_string=`less $ctrl_bam_list_file` ; ctrllist=(${ctrllist_string// / })
+total_bam_list= (${caselist[@]} ${caselist[@]})
 
-prefix=`echo $full_prefix | awk -F'/' '{print$NF}'`
-fq1=${full_prefix}_1.fq
-fq2=${full_prefix}_2.fq
-
-TAG='@RG\tID:'$prefix'\tLB:'$prefix'\tSM:'$prefix'\tPL:Illumina\tPU:'$prefix
-
-# bwa index -a bwtsw $ref_genome
-echo "bwa mem -t $threads -R $TAG $ref_genome $fq1 $fq2 | samtools sort -@ $threads -o $sort_bam_file"
-
-bwa mem -t $threads \
-    -R $TAG \
-    $ref_genome \
-    $fq1 \
-    $fq2 | \
-samtools sort -@ $threads -o $sort_bam_file
-samtools index $sort_bam_file
-}
-
-fullprefixlist=`find /public/home/huanglu/mouse_APA_AS/data -name "*.fq"|cut -d "_" -f 1-3|sort|uniq` 
-
+get_coverage_bedgraph(){
 
 chrominfo_file=$output_dir/chromInfo.txt
 ref_version=`basename $ref_genome | awk -F'.fa' '{print$1}'`
@@ -65,39 +46,30 @@ wget http://hgdownload.soe.ucsc.edu/goldenPath/$ref_version/database/chromInfo.t
 echo wget chromInfo failed !!! ref_genome should be hg19.fa, hg38.fa, mm9.fa, or mm10.fa !!!
 gzip -dc ${chrominfo_file}.gz > ${chrominfo_file}.gz
 
-get_coverage_bedgraph(){
+sort_bam_file=$1
+bedgraphfile=$bedgraphdir/`basename $sort_bam_file | awk -F '.sort.bam' '{print$1}'`
 
+echo "genomeCoverageBed -bg -ibam $sort_bam_file -g $chrominfo_file -split > $bedgraphfile"
+genomeCoverageBed \
+  -bg \
+  -ibam $sort_bam_file \
+  -g $chrominfo_file \
+  -split \
+  > $bedgraphfile
 
 }
 
 
-for i in $fullprefixlist
-do 
-	sort_bam_file=${i}.sort.bam
-	bwa_align_sort $ref_genome $i $bwa_threads $sort_bam_file
-done
+if [ ${#total_bam_list[@]} -lt 10 ]  
+then
+	para_num=`${#total_bam_list[@]}`
+else
+	para_num=10
+fi
+
+echo ${total_bam_list[@]} | xargs -L 1 -P $para_num -I {} get_coverage_bedgraph {}
 
 
-for i in $fullprefixlist
-do
-    sort_bam_file=${i}.sort.bam
-    bedgraphfile=${i}.bedgraph
-    echo "genomeCoverageBed -bg -ibam $sort_bam_file -g $chrominfo_file -split > $bedgraphfile"
-    genomeCoverageBed \
-      -bg \
-      -ibam $sort_bam_file \
-      -g $chrominfo_file \
-      -split \
-      > $bedgraphfile
-done
-
-
-
-
-
-
-for i in ${out_prefix[@]}
-do
   configure_file=$configdir/${i}.txt
 
   if [ $i = young_vs_old ]
@@ -131,7 +103,6 @@ Fold_change_cutoff=0.59
 """ \
   > $configure_file
 
-done
 
 
 for i in `ls $configdir|grep -v "log"`
