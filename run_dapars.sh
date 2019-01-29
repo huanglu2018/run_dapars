@@ -1,5 +1,7 @@
 ## [DaPars](http://lilab.research.bcm.edu/dldcc-web/lilab/zheng/DaPars_Documentation/html/DaPars.html)
 
+
+source activate dapars
 input_dir=
 output_dir=/public/home/huanglu/mouse_APA_AS/APA/dapars/output  
 DaPars_Extract_Anno_ex=/public/home/huanglu/APA/src/dapars/DaPars_Extract_Anno.py
@@ -11,7 +13,7 @@ bwa_threads=10
 case_bam_list_file=
 ctrl_bam_list_file=
 
-source activate dapars
+
 bedgraphdir=$output_dir/bedgraph_file
 mkdir -p $bedgraphdir
 
