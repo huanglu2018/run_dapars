@@ -16,6 +16,9 @@ bedgraphdir=$output_dir/bedgraph_file
 mkdir -p $bedgraphdir
 mkdir -p $logdir
 
+
+extract_3UTR(){
+bedfile=$1
 symbol_map=$output_dir/$(basename $bedfile).symbol_map.txt
 extracted_3UTR=$output_dir/$(basename $bedfile).extracted_3UTR.txt
 
@@ -25,23 +28,20 @@ python2 $DaPars_Extract_Anno_ex \
     -b $bedfile \
     -s $symbol_map \
     -o $extracted_3UTR
+}
 
+extract_3UTR 
+
+	
 caselist_string=`less $case_bam_list_file` ; caselist=(${caselist_string// / })
 ctrllist_string=`less $ctrl_bam_list_file` ; ctrllist=(${ctrllist_string// / })
-total_bam_list= (${caselist[@]} ${caselist[@]})
+total_bam_list= (${caselist[@]} ${ctrllist[@]})
 
 get_coverage_bedgraph(){
-
-chrominfo_file=$output_dir/chromInfo.txt
-ref_version=`basename $ref_genome | awk -F'.fa' '{print$1}'`
-wget http://hgdownload.soe.ucsc.edu/goldenPath/$ref_version/database/chromInfo.txt.gz -O ${chrominfo_file}.gz || \
-echo wget chromInfo failed !!! ref_genome should be hg19.fa, hg38.fa, mm9.fa, or mm10.fa !!!
-gzip -dc ${chrominfo_file}.gz > ${chrominfo_file}.gz
-
 sort_bam_file=$1
+chrominfo_file=$2
 bedgraphfile=$bedgraphdir/`basename $sort_bam_file | awk -F '.sort.bam' '{print$1}'`
 
-echo "genomeCoverageBed -bg -ibam $sort_bam_file -g $chrominfo_file -split > $bedgraphfile"
 genomeCoverageBed \
   -bg \
   -ibam $sort_bam_file \
@@ -57,7 +57,7 @@ else
 	para_num=10
 fi
 
-echo ${total_bam_list[@]} | xargs -L 1 -P $para_num -I {} get_coverage_bedgraph {}
+echo ${total_bam_list[@]} | xargs -L 1 -P $para_num -I {} get_coverage_bedgraph {} $chrominfo_file
 
 Group1=/public/home/huanglu/mouse_APA_AS/data/young/WT2.bedgraph,/public/home/huanglu/mouse_APA_AS/data/young/WT5.bedgraph,/public/home/huanglu/mouse_APA_AS/data/young/WT6.bedgraph
 Group2=/public/home/huanglu/mouse_APA_AS/data/KO/KL1.bedgraph,/public/home/huanglu/mouse_APA_AS/data/KO/KL5.bedgraph,/public/home/huanglu/mouse_APA_AS/data/KO/KL6.bedgraph
