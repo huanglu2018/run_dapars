@@ -59,7 +59,6 @@ fi
 
 echo ${total_bam_list[@]} | xargs -L 1 -P $para_num -I {} get_coverage_bedgraph {}
 
-
 Group1=/public/home/huanglu/mouse_APA_AS/data/young/WT2.bedgraph,/public/home/huanglu/mouse_APA_AS/data/young/WT5.bedgraph,/public/home/huanglu/mouse_APA_AS/data/young/WT6.bedgraph
 Group2=/public/home/huanglu/mouse_APA_AS/data/KO/KL1.bedgraph,/public/home/huanglu/mouse_APA_AS/data/KO/KL5.bedgraph,/public/home/huanglu/mouse_APA_AS/data/KO/KL6.bedgraph
 
