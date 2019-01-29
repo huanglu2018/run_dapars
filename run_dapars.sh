@@ -1,8 +1,11 @@
+#!/usr/bin/bash
+
 ## [DaPars](http://lilab.research.bcm.edu/dldcc-web/lilab/zheng/DaPars_Documentation/html/DaPars.html)
 
 
 source activate dapars
 
+source ./config.txt
 bedgraphdir=$output_dir/bedgraph_file
 mkdir -p $bedgraphdir
 
