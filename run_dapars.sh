@@ -11,11 +11,9 @@ bwa_threads=10
 case_bam_list_file=
 ctrl_bam_list_file=
 
-logdir=$output_dir/log
+source activate dapars
 bedgraphdir=$output_dir/bedgraph_file
 mkdir -p $bedgraphdir
-mkdir -p $logdir
-
 
 extract_3UTR(){
 bedfile=$1
@@ -30,12 +28,6 @@ python2 $DaPars_Extract_Anno_ex \
     -o $extracted_3UTR
 }
 
-extract_3UTR $bedfile
-
-caselist_string=`less $case_bam_list_file` ; caselist=(${caselist_string// / })
-ctrllist_string=`less $ctrl_bam_list_file` ; ctrllist=(${ctrllist_string// / })
-total_bam_list= (${caselist[@]} ${ctrllist[@]})
-
 get_coverage_bedgraph(){
 sort_bam_file=$1
 chrominfo_file=$2
@@ -49,17 +41,13 @@ genomeCoverageBed \
   > $bedgraphfile
 }
 
-if [ ${#total_bam_list[@]} -lt 10 ]  
-then
-	para_num=`${#total_bam_list[@]}`
-else
-	para_num=10
-fi
-
+extract_3UTR $bedfile
+caselist_string=`less $case_bam_list_file` ; caselist=(${caselist_string// / })
+ctrllist_string=`less $ctrl_bam_list_file` ; ctrllist=(${ctrllist_string// / })
+total_bam_list= (${caselist[@]} ${ctrllist[@]})
+if [ ${#total_bam_list[@]} -lt 10 ]; then para_num=`${#total_bam_list[@]}`;else para_num=10 ; fi
 echo ${total_bam_list[@]} | xargs -L 1 -P $para_num -I {} get_coverage_bedgraph {} $chrominfo_file
-
-Group1=/public/home/huanglu/mouse_APA_AS/data/young/WT2.bedgraph,/public/home/huanglu/mouse_APA_AS/data/young/WT5.bedgraph,/public/home/huanglu/mouse_APA_AS/data/young/WT6.bedgraph
-Group2=/public/home/huanglu/mouse_APA_AS/data/KO/KL1.bedgraph,/public/home/huanglu/mouse_APA_AS/data/KO/KL5.bedgraph,/public/home/huanglu/mouse_APA_AS/data/KO/KL6.bedgraph
+Group1=`echo $caselist_string |sed -e 's/ /,/g' `;Group2=`echo $ctrllist_string |sed -e 's/ /,/g' `
 
 echo \
 """
@@ -80,10 +68,4 @@ Fold_change_cutoff=0.59
 """ \
   > $output_dir/configure.txt
 
-
-run_dapars(){
-python2 $DaPars_ex $configdir"/"$1 |& tee $logdir"/"$i"_"`date "+%Y_%m_%d_%H_%M_%S"`"_log.txt"
-}
-
-run_dapars $output_dir/configure.txt
-
+python2 $DaPars_ex $output_dir/configure.txt |& tee $output_dir"/"`date "+%Y_%m_%d_%H_%M_%S"`"_log.txt"
