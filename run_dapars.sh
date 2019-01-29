@@ -30,9 +30,8 @@ python2 $DaPars_Extract_Anno_ex \
     -o $extracted_3UTR
 }
 
-extract_3UTR 
+extract_3UTR $bedfile
 
-	
 caselist_string=`less $case_bam_list_file` ; caselist=(${caselist_string// / })
 ctrllist_string=`less $ctrl_bam_list_file` ; ctrllist=(${ctrllist_string// / })
 total_bam_list= (${caselist[@]} ${ctrllist[@]})
