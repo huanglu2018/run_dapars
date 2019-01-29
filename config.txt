@@ -1,1 +1,12 @@
+input_dir=
+output_dir=/public/home/huanglu/mouse_APA_AS/APA/dapars/output  
+DaPars_Extract_Anno_ex=/public/home/huanglu/APA/src/dapars/DaPars_Extract_Anno.py
+DaPars_ex=/public/home/huanglu/APA/src/dapars/DaPars_main.py
+bedfile=/public/home/huanglu/APA/ncbi.mouse.gencode19.basic.bed
+# extracted_3UTR=/public/home/huanglu/APA/extracted_3UTR.bed
+ref_genome=/public/home/huanglu/resource/genome/mm10.fa
+bwa_threads=10
 chrominfo_file=
+case_bam_list_file=
+ctrl_bam_list_file=
+
